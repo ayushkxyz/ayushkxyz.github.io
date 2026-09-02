@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributed AI App-Builder Platform — Ayush Katiyar</title>
+<meta name="description" content="A Lovable-inspired microservices platform on Spring Cloud and Kubernetes, using a Kafka Saga with idempotent consumers to keep four services consistent.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){document.documentElement.className+=' anim'}</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2302264F'/><text y='70' x='50' font-size='54' text-anchor='middle' font-family='Helvetica,Arial' font-weight='700' fill='%23FFFFFF'>ak</text></svg>">
+</head>
+<body class="case">
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="mark" href="index.html">
+      <span class="dot" aria-hidden="true"></span>
+      Ayush Katiyar
+      <span class="sub">software engineer</span>
+    </a>
+    <ul>
+      <li><a href="index.html#projects" aria-current="true">Projects</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li class="hide-sm"><a href="Ayush_Katiyar_Resume.pdf" download>Resume</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="case-hero">
+  <div class="wrap">
+    <a class="back" href="index.html#projects">← All projects</a>
+    <p class="label label-y" style="margin-top:30px">Case 02 — Distributed systems</p>
+    <h1>Distributed AI App-Builder Platform</h1>
+    <p class="lede">A Lovable-inspired platform that takes a prompt and returns a running app on a live URL. Generating the code turned out to be the easy half. Getting six services to agree on whether a build succeeded was the real work.</p>
+    <dl class="spec">
+      <div><dt>Role</dt><dd>Solo — designed and built it myself</dd></div>
+      <div><dt>Stack</dt><dd>Spring Boot, Spring Cloud, Kafka, Kubernetes, MinIO, Redis</dd></div>
+      <div><dt>Focus</dt><dd>Saga orchestration, idempotent consumers, dynamic provisioning</dd></div>
+      <div><dt>Status</dt><dd>Personal project, built 2025 — not a production system</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">The shape of it</p>
+        <div>
+          <h2>Why this needed to be more than one service</h2>
+          <div class="prose">
+            <p>A build has four phases with genuinely different resource profiles: interpret the prompt, generate code, store artifacts, run a preview. Generation is slow and I/O-bound against a model API. Preview provisioning is a Kubernetes operation that can take a minute and then hold resources indefinitely. Putting these in one process means one slow build blocks everything and one crash loses all four phases.</p>
+            <p>So the platform is split, with <b>Spring Cloud</b> supplying the boring infrastructure: Eureka for discovery, Config for centralised configuration, and Gateway as the single entry point handling routing and auth for the whole system.</p>
+            <h3>Where the AI part sits</h3>
+            <p>Code generation runs through <b>Spring AI</b> against OpenAI, with two things that make output usable rather than plausible: <b>tool-calling</b>, so the model requests file operations through functions I control instead of emitting a blob I have to parse; and <b>RAG-style context injection</b>, so the prompt carries the project's existing files and conventions and the model edits a real codebase rather than inventing one.</p>
+          </div>
+
+          <figure class="figure">
+            <svg viewBox="0 0 620 270" role="img" aria-label="Architecture: gateway routes to generator, artifact and preview services, each registered with Eureka and communicating over Kafka.">
+              <g class="node"><rect x="10" y="108" width="112" height="44" rx="3"/><text x="66" y="135" text-anchor="middle">gateway</text></g>
+              <line class="edge" x1="122" y1="130" x2="158" y2="130"/>
+              <polygon class="arrow" points="158,130 150,126 150,134"/>
+
+              <g class="node on"><rect x="162" y="108" width="118" height="44" rx="3"/><text x="221" y="135" text-anchor="middle">orchestr.</text></g>
+
+              <line class="edge y" x1="280" y1="130" x2="330" y2="130"/>
+              <polygon class="arrow y" points="330,130 322,126 322,134"/>
+              <text class="edge-label" x="305" y="120" text-anchor="middle">kafka</text>
+
+              <g class="node"><rect x="334" y="40" width="130" height="42" rx="3"/><text x="399" y="66" text-anchor="middle">generator</text></g>
+              <g class="node"><rect x="334" y="108" width="130" height="42" rx="3"/><text x="399" y="134" text-anchor="middle">artifacts</text></g>
+              <g class="node"><rect x="334" y="176" width="130" height="42" rx="3"/><text x="399" y="202" text-anchor="middle">preview</text></g>
+
+              <line class="edge" x1="330" y1="130" x2="330" y2="61"/><line class="edge" x1="330" y1="61" x2="334" y2="61"/>
+              <line class="edge" x1="330" y1="130" x2="330" y2="197"/><line class="edge" x1="330" y1="197" x2="334" y2="197"/>
+
+              <line class="edge" x1="464" y1="61" x2="500" y2="61"/>
+              <g class="node ghost"><rect x="504" y="40" width="104" height="42" rx="3"/><text x="556" y="66" text-anchor="middle">openai</text></g>
+              <line class="edge" x1="464" y1="129" x2="500" y2="129"/>
+              <g class="node ghost"><rect x="504" y="108" width="104" height="42" rx="3"/><text x="556" y="134" text-anchor="middle">minio</text></g>
+              <line class="edge" x1="464" y1="197" x2="500" y2="197"/>
+              <g class="node ghost"><rect x="504" y="176" width="104" height="42" rx="3"/><text x="556" y="202" text-anchor="middle">k8s pod</text></g>
+
+              <text class="lane-label" x="10" y="250">EUREKA DISCOVERY · SPRING CLOUD CONFIG · REDIS CACHE</text>
+              <line class="edge dashed" x1="10" y1="228" x2="608" y2="228"/>
+            </svg>
+            <figcaption>
+              <p>The gateway is the only public surface. Everything behind it discovers its peers through Eureka and talks over Kafka rather than direct calls.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 01</p>
+        <div>
+          <h2>A build that half-succeeds</h2>
+          <div class="prose">
+            <p>Four services, four chances to fail. Code generates, artifacts upload, and then the preview pod fails to schedule because the cluster is out of capacity. Now there's a project record claiming to be live, storage holding an orphaned bundle, and a user staring at a URL that never resolves.</p>
+            <p>There's no distributed transaction available here — Kafka, MinIO and the Kubernetes API cannot participate in a two-phase commit, and I wouldn't want them to. So the build is modelled as a <b>Saga</b>: a sequence of local transactions, each publishing an event that triggers the next, and each with a defined <b>compensating action</b> that undoes it.</p>
+            <p>When provisioning fails, the saga runs backwards. Artifacts are deleted, the project is marked failed with a reason, and the user gets an error instead of a broken link. The system ends in a state someone chose, rather than wherever the crash left it.</p>
+          </div>
+
+          <figure class="figure">
+            <svg viewBox="0 0 620 220" role="img" aria-label="Saga: generate, store, provision steps forward with compensating actions running backward on failure.">
+              <text class="lane-label" x="10" y="28">FORWARD PATH</text>
+              <g class="node"><rect x="10" y="44" width="132" height="42" rx="3"/><text x="76" y="70" text-anchor="middle">generate</text></g>
+              <g class="node"><rect x="182" y="44" width="132" height="42" rx="3"/><text x="248" y="70" text-anchor="middle">store</text></g>
+              <g class="node"><rect x="354" y="44" width="132" height="42" rx="3"/><text x="420" y="70" text-anchor="middle">provision</text></g>
+              <g class="node terminal"><rect x="518" y="44" width="92" height="42" rx="3"/><text x="564" y="70" text-anchor="middle">FAILED</text></g>
+
+              <line class="edge" x1="142" y1="65" x2="178" y2="65"/><polygon class="arrow" points="178,65 170,61 170,69"/>
+              <line class="edge" x1="314" y1="65" x2="350" y2="65"/><polygon class="arrow" points="350,65 342,61 342,69"/>
+              <line class="edge" x1="486" y1="65" x2="514" y2="65"/><polygon class="arrow" points="514,65 506,61 506,69"/>
+
+              <text class="lane-label" x="10" y="132">COMPENSATION</text>
+              <g class="node on"><rect x="10" y="148" width="132" height="42" rx="3"/><text x="76" y="174" text-anchor="middle">mark failed</text></g>
+              <g class="node on"><rect x="182" y="148" width="132" height="42" rx="3"/><text x="248" y="174" text-anchor="middle">delete blob</text></g>
+              <g class="node on"><rect x="354" y="148" width="132" height="42" rx="3"/><text x="420" y="174" text-anchor="middle">release pod</text></g>
+
+              <line class="edge y" x1="350" y1="169" x2="318" y2="169"/><polygon class="arrow y" points="318,169 326,165 326,173"/>
+              <line class="edge y" x1="178" y1="169" x2="146" y2="169"/><polygon class="arrow y" points="146,169 154,165 154,173"/>
+              <line class="edge y" x1="564" y1="86" x2="564" y2="169"/><line class="edge y" x1="564" y1="169" x2="490" y2="169"/>
+              <polygon class="arrow y" points="490,169 498,165 498,173"/>
+            </svg>
+            <figcaption>
+              <p>Each step knows how to undo itself. Failure at any point walks the chain back to a clean, explained state.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 02</p>
+        <div>
+          <h2>Kafka will deliver that twice</h2>
+          <div class="prose">
+            <p>At-least-once delivery is the honest default, which means every consumer will eventually see a message it has already processed — after a rebalance, a retry, or a slow commit. If the provisioning consumer isn't careful, one duplicate becomes two pods for one project, and the cluster pays for it.</p>
+            <p>So consumers are <b>idempotent by construction</b>. Each carries the build's identifier as a deduplication key and checks state before acting: if a pod already exists for this build, the handler acknowledges and returns rather than provisioning again. The effect of processing a message twice is identical to processing it once.</p>
+            <h3>Preview provisioning</h3>
+            <p>Each successful build gets a pod allocated dynamically, with the generated bundle synced from <b>MinIO</b> and <b>Redis</b> caching the metadata a preview needs so a page load doesn't fan out into three service calls.</p>
+            <h3>What I'd do next</h3>
+            <ul>
+              <li>Give preview pods a TTL and a reaper, since the current design assumes someone eventually cleans up.</li>
+              <li>Add distributed tracing across the saga — right now diagnosing a stuck build means reading four services' logs side by side.</li>
+              <li>Move dedup keys out of service memory into a shared store, so a restart mid-saga can't reprocess.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nextprev">
+    <a href="payment-gateway.html">
+      <span class="label">Previous case</span>
+      <h3>← Payment Gateway &amp; Ledger</h3>
+    </a>
+    <a class="r" href="booking-engine.html">
+      <span class="label">Next case</span>
+      <h3>Booking &amp; Dynamic Pricing →</h3>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Ayush Katiyar — backend engineer, Bengaluru</span>
+    <span><a href="mailto:ayushkatiyar323@gmail.com?subject=Hi%20Ayush" data-email="ayushkatiyar323@gmail.com">ayushkatiyar323@gmail.com</a></span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

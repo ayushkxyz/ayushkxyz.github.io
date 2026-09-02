@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payment Gateway &amp; Ledger Service — Ayush Katiyar</title>
+<meta name="description" content="A Razorpay-inspired payment gateway built around a lifecycle state machine, a transactional outbox for Kafka, and a Redis idempotency filter that blocks duplicate charges.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){document.documentElement.className+=' anim'}</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2302264F'/><text y='70' x='50' font-size='54' text-anchor='middle' font-family='Helvetica,Arial' font-weight='700' fill='%23FFFFFF'>ak</text></svg>">
+</head>
+<body class="case">
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="mark" href="index.html">
+      <span class="dot" aria-hidden="true"></span>
+      Ayush Katiyar
+      <span class="sub">software engineer</span>
+    </a>
+    <ul>
+      <li><a href="index.html#projects" aria-current="true">Projects</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li class="hide-sm"><a href="Ayush_Katiyar_Resume.pdf" download>Resume</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="case-hero">
+  <div class="wrap">
+    <a class="back" href="index.html#projects">← All projects</a>
+    <p class="label label-y" style="margin-top:30px">Case 01 — Payments</p>
+    <h1>Payment Gateway &amp; Ledger Service</h1>
+    <p class="lede">A Razorpay-inspired gateway. The feature list is unremarkable — charge a card, refund it, settle it. The engineering is entirely about two questions: can this charge happen twice, and can this event get lost?</p>
+    <dl class="spec">
+      <div><dt>Role</dt><dd>Solo — designed and built it myself</dd></div>
+      <div><dt>Stack</dt><dd>Java, Spring Boot, PostgreSQL, Kafka, Redis</dd></div>
+      <div><dt>Focus</dt><dd>Idempotency, exactly-once delivery, encryption at rest</dd></div>
+      <div><dt>Status</dt><dd>Personal project, built 2025 — not a production system</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">The lifecycle</p>
+        <div>
+          <h2>Every payment is a state machine, not a row you update</h2>
+          <div class="prose">
+            <p>The naive version of a payments table has a <code>status</code> column that gets overwritten. That design loses history, permits illegal jumps, and makes disputes unanswerable. Instead a payment moves through explicit states, and each transition is appended to an audit trail: who triggered it, when, and what the previous state was.</p>
+            <p>The practical benefit is that illegal transitions become impossible rather than unlikely. A settled payment cannot be captured again, because the state machine has no such edge.</p>
+          </div>
+
+          <figure class="figure">
+            <svg viewBox="0 0 560 250" role="img" aria-label="Payment lifecycle: Created to Captured to Settled, with a dashed Refunded branch from Captured.">
+              <line class="edge" x1="132" y1="70" x2="216" y2="70"/>
+              <polygon class="arrow" points="216,70 208,66 208,74"/>
+              <text class="edge-label" x="174" y="58" text-anchor="middle">capture</text>
+
+              <line class="edge" x1="344" y1="70" x2="428" y2="70"/>
+              <polygon class="arrow" points="428,70 420,66 420,74"/>
+              <text class="edge-label" x="386" y="58" text-anchor="middle">settle</text>
+
+              <line class="edge dashed" x1="280" y1="94" x2="280" y2="164"/>
+              <polygon class="arrow" points="280,164 276,156 284,156"/>
+              <text class="edge-label" x="292" y="133">refund</text>
+
+              <g class="node" id="n0"><rect x="12" y="48" width="120" height="44" rx="3"/><text x="72" y="75" text-anchor="middle">CREATED</text></g>
+              <g class="node" id="n1"><rect x="220" y="48" width="120" height="44" rx="3"/><text x="280" y="75" text-anchor="middle">CAPTURED</text></g>
+              <g class="node" id="n2"><rect x="428" y="48" width="120" height="44" rx="3"/><text x="488" y="75" text-anchor="middle">SETTLED</text></g>
+              <g class="node terminal" id="n3"><rect x="220" y="166" width="120" height="44" rx="3"/><text x="280" y="193" text-anchor="middle">REFUNDED</text></g>
+
+              <g id="token" style="transform:translate(72px,70px)"><circle r="6"/></g>
+            </svg>
+            <figcaption>
+              <p>Four states, four legal transitions. Refund is terminal from captured; nothing returns to created.</p>
+              <button class="run" id="run" type="button">Run a payment</button>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 01</p>
+        <div>
+          <h2>A customer clicks pay twice</h2>
+          <div class="prose">
+            <p>This is the defining problem of a payments API. The client has no idea whether its first request succeeded — the response may have been lost after the charge committed — so it retries. Without protection, the retry is a second charge, and the customer finds out on their statement.</p>
+            <h3>What I built</h3>
+            <p>A servlet filter in front of the payment endpoints, backed by Redis, that treats the client's <b>idempotency key</b> as the unit of truth:</p>
+            <ul>
+              <li>On arrival, the filter attempts to acquire a <b>lock on the key</b>. If it can't, a request with that key is already in flight and the duplicate is rejected rather than queued.</li>
+              <li>If the key has a stored response, that response is <b>replayed verbatim</b> — same body, same status. The second click gets the first charge's answer.</li>
+              <li>If the key is new, the request proceeds, and the response is written back against the key before the lock is released.</li>
+            </ul>
+            <p>The important detail is that the lock is taken before any work happens, not after. An idempotency check that runs after the charge is a race with a friendlier name.</p>
+          </div>
+
+          <div class="code">POST /payments
+Idempotency-Key: <b>ord_88f21c</b>
+
+  ├─ lock(ord_88f21c)  ── held? ──▶ 409 duplicate in flight
+  ├─ get(ord_88f21c)   ── hit?  ──▶ replay stored 201 response
+  └─ miss ─▶ charge ─▶ store(ord_88f21c, response) ─▶ unlock</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 02</p>
+        <div>
+          <h2>The event that never left</h2>
+          <div class="prose">
+            <p>Once a payment is captured, other things must happen: a ledger entry, a receipt, a webhook to the merchant. The obvious implementation publishes to Kafka right after the database commit. The obvious implementation is a dual-write bug.</p>
+            <p>If the service dies between the commit and the publish, the payment exists and the event does not. Nothing retries it, because nothing knows it was owed. Move the publish inside the transaction instead and you get the mirror-image failure: the event is sent for a transaction that then rolls back.</p>
+            <h3>The transactional outbox</h3>
+            <p>The fix is to make the event part of the same commit. The payment row and an <code>outbox</code> row are written in one transaction, so they succeed or fail together. A separate relay polls the outbox, publishes to Kafka, and marks rows dispatched — retrying until the broker acknowledges.</p>
+            <p>This buys at-least-once delivery, which means consumers must tolerate duplicates. That's a fair trade: duplicate delivery is a solvable problem on the consumer side, whereas a lost event is unrecoverable.</p>
+          </div>
+
+          <figure class="figure">
+            <svg viewBox="0 0 620 250" role="img" aria-label="Transactional outbox: payment and outbox rows committed in one transaction, then a relay polls the outbox and publishes to Kafka.">
+              <rect class="lane-bg" x="8" y="26" width="330" height="94" rx="3"/>
+              <text class="lane-label" x="18" y="46">ONE DATABASE TRANSACTION</text>
+
+              <g class="node"><rect x="24" y="58" width="130" height="44" rx="3"/><text x="89" y="85" text-anchor="middle">payments</text></g>
+              <g class="node"><rect x="190" y="58" width="130" height="44" rx="3"/><text x="255" y="85" text-anchor="middle">outbox</text></g>
+              <line class="edge" x1="154" y1="80" x2="186" y2="80"/>
+
+              <line class="edge y" x1="255" y1="106" x2="255" y2="150"/>
+              <polygon class="arrow y" points="255,150 251,142 259,142"/>
+              <text class="edge-label" x="266" y="132">poll</text>
+
+              <g class="node on"><rect x="190" y="152" width="130" height="44" rx="3"/><text x="255" y="179" text-anchor="middle">relay</text></g>
+
+              <line class="edge" x1="320" y1="174" x2="428" y2="174"/>
+              <polygon class="arrow" points="428,174 420,170 420,178"/>
+              <text class="edge-label" x="374" y="164" text-anchor="middle">publish</text>
+
+              <g class="node"><rect x="432" y="152" width="130" height="44" rx="3"/><text x="497" y="179" text-anchor="middle">kafka</text></g>
+
+              <line class="edge dashed" x1="497" y1="152" x2="497" y2="106"/>
+              <polygon class="arrow" points="497,106 493,114 501,114"/>
+              <text class="edge-label" x="508" y="132">ack</text>
+              <g class="node ghost"><rect x="432" y="58" width="130" height="44" rx="3"/><text x="497" y="85" text-anchor="middle">dispatched</text></g>
+            </svg>
+            <figcaption>
+              <p>The event is committed as data, then delivered as a message. The relay is free to crash and retry — the outbox row is still there.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Handling card data</p>
+        <div>
+          <h2>A vault, because raw card numbers shouldn't be anywhere</h2>
+          <div class="prose">
+            <p>I wanted the card-handling path to reflect how a real gateway is constrained, so I built a PCI-inspired vault rather than storing anything usable. Card details are encrypted with <b>AES-GCM under envelope encryption</b> — a per-record data key, itself encrypted by a master key — and the rest of the system only ever sees a token.</p>
+            <p>Because AES-GCM is authenticated, tampering with ciphertext fails verification instead of decrypting into garbage. Rate limiting on the sensitive endpoints runs as a <b>Redis Lua script</b>, so the check-and-increment happens atomically inside Redis rather than as two round trips a burst of traffic can slip between.</p>
+            <h3>What I'd do next</h3>
+            <ul>
+              <li>Replace outbox polling with logical decoding off the WAL, so delivery latency stops depending on poll interval.</li>
+              <li>Add a reconciliation job that walks the ledger against the payment states and reports drift, rather than trusting that it can't happen.</li>
+              <li>Move key management to a real KMS, since a master key in application config is the weakest link in the current design.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nextprev">
+    <a href="index.html#projects">
+      <span class="label">Back to</span>
+      <h3>All projects</h3>
+    </a>
+    <a class="r" href="ai-platform.html">
+      <span class="label">Next case</span>
+      <h3>Distributed AI App Builder →</h3>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Ayush Katiyar — backend engineer, Bengaluru</span>
+    <span><a href="mailto:ayushkatiyar323@gmail.com?subject=Hi%20Ayush" data-email="ayushkatiyar323@gmail.com">ayushkatiyar323@gmail.com</a></span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

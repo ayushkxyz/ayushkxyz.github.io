@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotel Booking &amp; Dynamic Pricing — Ayush Katiyar</title>
+<meta name="description" content="An Airbnb-inspired booking backend: JPA pessimistic locking against double-booking, and a decorator-pattern pricing engine refreshed on a schedule.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){document.documentElement.className+=' anim'}</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2302264F'/><text y='70' x='50' font-size='54' text-anchor='middle' font-family='Helvetica,Arial' font-weight='700' fill='%23FFFFFF'>ak</text></svg>">
+</head>
+<body class="case">
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="mark" href="index.html">
+      <span class="dot" aria-hidden="true"></span>
+      Ayush Katiyar
+      <span class="sub">software engineer</span>
+    </a>
+    <ul>
+      <li><a href="index.html#projects" aria-current="true">Projects</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li class="hide-sm"><a href="Ayush_Katiyar_Resume.pdf" download>Resume</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="case-hero">
+  <div class="wrap">
+    <a class="back" href="index.html#projects">← All projects</a>
+    <p class="label label-y" style="margin-top:30px">Case 03 — Concurrency</p>
+    <h1>Hotel Booking &amp; Dynamic Pricing</h1>
+    <p class="lede">An Airbnb-inspired booking backend. Inventory is the whole problem: a room is a finite thing, and the moment two people want the last one, optimism stops being a strategy.</p>
+    <dl class="spec">
+      <div><dt>Role</dt><dd>Solo — designed and built it myself</dd></div>
+      <div><dt>Stack</dt><dd>Spring Boot, Spring Security, JWT, PostgreSQL, Stripe</dd></div>
+      <div><dt>Focus</dt><dd>Row-level locking, pricing composition, scheduled recomputation</dd></div>
+      <div><dt>Status</dt><dd>Personal project, built 2025 — not a production system</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 01</p>
+        <div>
+          <h2>Two guests, one last room</h2>
+          <div class="prose">
+            <p>The check-then-act bug is almost impossible to see in code review, because the code reads correctly: look up availability, confirm a room is free, create the booking, decrement inventory. Every line is right. The problem is the gap between line one and line four.</p>
+            <p>Two requests land microseconds apart. Both read availability as one. Both conclude they may proceed. Both write. The room is sold twice, and nobody finds out until check-in.</p>
+            <h3>Why I chose pessimistic locking</h3>
+            <p>Optimistic locking — a version column, retry on conflict — is usually the right default, and it's what I'd reach for on a low-contention table. Booking inventory is the opposite case: contention is concentrated exactly where the resource is scarce, so the last room is precisely the row every concurrent request wants. Under optimistic locking that row generates a storm of conflicts and retries at the worst possible moment.</p>
+            <p>So the booking path takes a <b>pessimistic write lock</b> on the inventory rows for the requested dates. The second request blocks at the database rather than racing, and when the lock releases it re-reads reality: zero rooms, request rejected. Inventory is then adjusted with an <b>atomic bulk update</b> — a single statement across the date range, guarded by a condition that rooms remain — so the decrement can't be based on a stale count.</p>
+            <p>The trade is deliberate: some throughput, in exchange for never overselling. For inventory that's the correct side of the trade.</p>
+          </div>
+
+          <figure class="figure">
+            <svg viewBox="0 0 620 250" role="img" aria-label="Two concurrent requests: A acquires the row lock and books; B blocks, then re-reads and is rejected.">
+              <text class="lane-label" x="10" y="26">REQUEST A</text>
+              <line class="edge dashed" x1="10" y1="40" x2="608" y2="40"/>
+              <g class="node on"><rect x="94" y="50" width="112" height="38" rx="3"/><text x="150" y="74" text-anchor="middle">lock rows</text></g>
+              <g class="node on"><rect x="246" y="50" width="112" height="38" rx="3"/><text x="302" y="74" text-anchor="middle">book</text></g>
+              <g class="node on"><rect x="398" y="50" width="112" height="38" rx="3"/><text x="454" y="74" text-anchor="middle">commit</text></g>
+              <line class="edge" x1="206" y1="69" x2="242" y2="69"/><polygon class="arrow" points="242,69 234,65 234,73"/>
+              <line class="edge" x1="358" y1="69" x2="394" y2="69"/><polygon class="arrow" points="394,69 386,65 386,73"/>
+
+              <text class="lane-label" x="10" y="150">REQUEST B</text>
+              <line class="edge dashed" x1="10" y1="164" x2="608" y2="164"/>
+              <g class="node"><rect x="94" y="174" width="112" height="38" rx="3"/><text x="150" y="198" text-anchor="middle">wait…</text></g>
+              <g class="node"><rect x="398" y="174" width="112" height="38" rx="3"/><text x="454" y="198" text-anchor="middle">re-read</text></g>
+              <g class="node terminal"><rect x="520" y="174" width="88" height="38" rx="3"/><text x="564" y="198" text-anchor="middle">409</text></g>
+              <line class="edge" x1="206" y1="193" x2="394" y2="193"/><polygon class="arrow" points="394,193 386,189 386,197"/>
+              <line class="edge" x1="510" y1="193" x2="516" y2="193"/>
+
+              <line class="edge y" x1="454" y1="88" x2="454" y2="170"/>
+              <polygon class="arrow y" points="454,170 450,162 458,162"/>
+              <text class="edge-label" x="464" y="132">lock released</text>
+            </svg>
+            <figcaption>
+              <p>B never sees stale availability. It waits at the lock, reads the world after A committed, and fails honestly.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="wrap">
+      <div class="case-body">
+        <p class="label">Hard problem 02</p>
+        <div>
+          <h2>Pricing rules that don't turn into a nest of conditionals</h2>
+          <div class="prose">
+            <p>Dynamic pricing starts simple and rots fast. A weekend multiplier, then a surge factor for high occupancy, then a seasonal adjustment, then a minimum-stay discount — and the pricing method becomes four hundred lines of nested conditions where nobody can tell which rule won.</p>
+            <p>I built it with the <b>decorator pattern</b> instead. There's a base rate, and each rule is a wrapper that takes a price and returns a price. Composing them is composing objects, not editing a function. A new rule is a new class, and removing one is deleting it — neither touches the booking path.</p>
+          </div>
+
+          <div class="code">basePrice
+  └─ <b>OccupancyDecorator</b>   ── ×1.25 when occupancy &gt; 80%
+       └─ <b>SeasonDecorator</b>  ── ×1.40 in peak season
+            └─ <b>WeekendDecorator</b> ── ×1.15 Fri–Sun
+                 = final quoted rate</div>
+
+          <div class="prose" style="margin-top:34px">
+            <h3>Why it's recomputed on a schedule</h3>
+            <p>Pricing depends on occupancy, which changes as bookings land, so a quote is only as fresh as its inputs. Computing it per request would put a chain of decorators and an occupancy query in front of every search response. Instead a <b>scheduled job runs hourly</b>, recomputes prices across the inventory, and writes them down — so reads are cheap and search stays fast.</p>
+            <p>The cost is a staleness window: for up to an hour, a displayed price can lag reality. That's acceptable for display, so the final price is re-validated at booking time before payment.</p>
+            <h3>The rest of it</h3>
+            <ul>
+              <li><b>Spring Security with JWT</b> for stateless auth, so nothing depends on server-side session affinity.</li>
+              <li><b>Stripe</b> for payments, with the booking only confirmed once payment succeeds — inventory is held, not sold, until then.</li>
+            </ul>
+            <h3>What I'd do next</h3>
+            <ul>
+              <li>Add an expiry to inventory holds, so an abandoned checkout returns the room automatically.</li>
+              <li>Load-test the lock path to find where queueing becomes a latency problem rather than assuming it doesn't.</li>
+              <li>Keep a price history table, since right now a recomputation overwrites what a guest was quoted.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nextprev">
+    <a href="ai-platform.html">
+      <span class="label">Previous case</span>
+      <h3>← Distributed AI App Builder</h3>
+    </a>
+    <a class="r" href="index.html#contact">
+      <span class="label">Next</span>
+      <h3>Get in touch →</h3>
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Ayush Katiyar — backend engineer, Bengaluru</span>
+    <span><a href="mailto:ayushkatiyar323@gmail.com?subject=Hi%20Ayush" data-email="ayushkatiyar323@gmail.com">ayushkatiyar323@gmail.com</a></span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
