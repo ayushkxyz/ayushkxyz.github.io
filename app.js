@@ -23,7 +23,7 @@
     '.sec-head', '.entry', '.peek-card', '.principles li', '.facts',
     '.edu .item', '.crow', '.spec div', '.nextprev a', '.figure',
     '.code', '.pull', '.stat', '.cta-band',
-    '.case-body h2', '.case-body .prose', '.about-grid .prose'
+    '.case-body h2', '.case-body .prose', '.about-grid .prose', '.skill-rows'
   ].join(',');
 
   /* ---------------------------------------------------------
@@ -254,6 +254,52 @@
       // the mailto navigation is left alone — no preventDefault
     });
   });
+
+  /* ---------------------------------------------------------
+     Theme toggle. The stored choice wins; with nothing stored we
+     follow the OS and keep following it until the user picks.
+     data-theme is already set by the inline boot script in <head>,
+     so this only wires the control up.
+     --------------------------------------------------------- */
+  (function () {
+    var docEl = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function stored() {
+      try {
+        var v = localStorage.getItem('theme');
+        return v === 'dark' || v === 'light' ? v : null;
+      } catch (e) { return null; }
+    }
+
+    function paint(theme) {
+      docEl.setAttribute('data-theme', theme);
+      var dark = theme === 'dark';
+      if (meta) meta.setAttribute('content', dark ? '#070D17' : '#FFFFFF');
+      if (btn) {
+        btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+      }
+    }
+
+    paint(docEl.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = docEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        try { localStorage.setItem('theme', next); } catch (e) {}
+        paint(next);
+      });
+    }
+
+    if (mq) {
+      var onSystem = function () { if (!stored()) paint(mq.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', onSystem);
+      else if (mq.addListener) mq.addListener(onSystem);
+    }
+  })();
 
   /* ---------------------------------------------------------
      Copy email

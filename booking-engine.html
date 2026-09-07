@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','light')}})();</script>
 <script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver' in window){document.documentElement.className+=' anim'}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2302264F'/><text y='70' x='50' font-size='54' text-anchor='middle' font-family='Helvetica,Arial' font-weight='700' fill='%23FFFFFF'>ak</text></svg>">
 </head>
@@ -19,15 +20,21 @@
   <div class="wrap">
     <a class="mark" href="index.html">
       <span class="dot" aria-hidden="true"></span>
-      Ayush Katiyar
+      <span class="name">Ayush Katiyar</span>
+      <span class="initials" aria-hidden="true">AK</span>
       <span class="sub">software engineer</span>
     </a>
     <ul>
       <li><a href="index.html#projects" aria-current="true">Projects</a></li>
       <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#skills">Skills</a></li>
       <li class="hide-sm"><a href="Ayush_Katiyar_Resume_.pdf" download>Resume</a></li>
       <li><a href="index.html#contact">Contact</a></li>
     </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Toggle dark mode">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
+    </button>
   </div>
 </nav>
 
@@ -150,6 +157,12 @@
 <footer>
   <div class="wrap">
     <span>Ayush Katiyar — software engineer, Bengaluru</span>
+    <span class="fsocial">
+      <a href="https://github.com/ayushkxyz" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/ayush-katiyar-0292101b6/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://leetcode.com/u/AyushKatiyar/" target="_blank" rel="noopener">LeetCode</a>
+      <a href="https://www.geeksforgeeks.org/profile/ayushkatiyar323" target="_blank" rel="noopener">GeeksforGeeks</a>
+    </span>
     <span><a href="mailto:ayushkatiyar323@gmail.com?subject=Hi%20Ayush" data-email="ayushkatiyar323@gmail.com">ayushkatiyar323@gmail.com</a></span>
   </div>
 </footer>
