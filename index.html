@@ -31,7 +31,7 @@
       <li><a href="#projects" aria-current="true">Projects</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#skills">Skills</a></li>
-      <li class="hide-sm"><a href="Ayush_Katiyar_Resume_.pdf" download>Resume</a></li>
+      <li class="hide-sm"><a href="Ayush_Katiyar_SDE.pdf" download>Resume</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Toggle dark mode">
@@ -46,10 +46,10 @@
     <div class="wrap">
       <span class="badge"><span class="dot" aria-hidden="true"></span> Open to SDE-1 backend roles — India or remote</span>
       <h1>Systems that <em>keep their promises</em> when everything arrives at once.</h1>
-      <p class="lede">I'm a software engineer at <b>Netradyne</b>, where my job is backend quality and test automation — API suites for our microservices, root-cause analysis through the service and data layers, regression tooling. Finding those failures made me want to design against them instead, so I've built <b>three production-shaped backends</b> in Java and Spring Boot on my own time. This site is the evidence.</p>
+      <p class="lede">I'm a software engineer at <b>Netradyne</b>, where my job is backend quality and automation &mdash; Java API automation in <b>TestNG and RestAssured</b> against our microservices, root-cause analysis through the service and data layers, end-to-end regression suites. Finding those failures made me want to design against them instead, so I've built <b>three production-shaped backends</b> in Java and Spring Boot on my own time. This site is the evidence.</p>
       <div class="hero-actions">
         <a class="btn btn-fill" href="#projects">See the projects</a>
-        <a class="btn" href="Ayush_Katiyar_Resume_.pdf" download>Resume</a>
+        <a class="btn" href="Ayush_Katiyar_SDE.pdf" download>Resume</a>
         <a class="btn" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ayushkatiyar323@gmail.com&amp;su=Hi%20Ayush" target="_blank" rel="noopener" data-email="ayushkatiyar323@gmail.com">Email me</a>
       </div>
       <div class="hero-meta">
@@ -110,6 +110,10 @@
           <p class="n">3</p>
           <p>backends designed, built and documented end to end, outside work hours</p>
         </div>
+        <div class="stat">
+          <p class="n">500<small>+</small></p>
+          <p>data structures and algorithms problems solved across LeetCode and GeeksforGeeks</p>
+        </div>
       </div>
     </div>
   </section>
@@ -129,7 +133,7 @@
           <p class="label kicker">Case 01 — Payments</p>
           <h3><a href="payment-gateway.html">Payment Gateway &amp; Ledger Service</a></h3>
           <p class="body">A Razorpay-inspired gateway built around a payment lifecycle state machine — created, captured, settled, refunded — where every transition is recorded in an audit trail and every outbound event leaves through a <b>transactional outbox</b> rather than a second network call inside a database transaction.</p>
-          <div class="stack"><span>Spring Boot</span><span>Kafka</span><span>PostgreSQL</span><span>Redis</span><span>AES-GCM</span></div>
+          <div class="stack"><span>Spring Boot</span><span>Kafka</span><span>PostgreSQL</span><span>Redis</span><span>Docker</span><span>AES-GCM</span></div>
           <div class="entry-cta"><a class="btn" href="payment-gateway.html">Read case study</a></div>
         </div>
         <dl class="aside">
@@ -145,7 +149,7 @@
           <p class="label kicker">Case 02 — Distributed systems</p>
           <h3><a href="ai-platform.html">Distributed AI App-Builder Platform</a></h3>
           <p class="body">A Lovable-inspired platform that turns a prompt into a running app. Spring Cloud handles discovery, config and gateway routing; Spring AI drives code generation with tool-calling and RAG-style context injection; Kubernetes provisions a live preview pod per build, with MinIO for artifacts and Redis for caching.</p>
-          <div class="stack"><span>Spring Cloud</span><span>Eureka</span><span>Gateway</span><span>Spring AI</span><span>Kubernetes</span><span>MinIO</span></div>
+          <div class="stack"><span>Spring Cloud</span><span>Eureka</span><span>Gateway</span><span>Spring AI</span><span>OpenAI</span><span>Kubernetes</span><span>MinIO</span></div>
           <div class="entry-cta"><a class="btn" href="ai-platform.html">Read case study</a></div>
         </div>
         <dl class="aside">
@@ -187,7 +191,7 @@
         <div>
           <div class="prose">
             <p>Let me be straight about where I am. I joined <b>Netradyne</b> in July 2024 as an Associate Software Engineer and was promoted to Software Engineer within six months. Netradyne builds fleet safety systems — telemetry streaming off vehicles on the road, turning into alerts a fleet manager acts on. When an alert is wrong, someone stops trusting the product.</p>
-            <p>My work there is <b>backend quality and automation</b>, not feature development. I write the API test suites for the <b>Speeding V2</b> microservices, debug the <b>Alert Geofence</b> module end to end through REST endpoints, database queries and event flows, and I built the automation that replaced our manual API regression pass. It's a job spent reading other people's services closely enough to find what they got wrong.</p>
+            <p>My work there is <b>backend quality and automation</b>, not feature development. I build and maintain the Java API automation &mdash; <b>TestNG and RestAssured</b> &mdash; against the <b>Speeding V2</b> microservices, working alongside the backend engineers on root-cause analysis. I debugged the <b>Alert Geofence</b> module end to end through REST endpoints, database queries and event flows, isolating 100+ defects and their underlying causes in service code, and I designed the end-to-end regression suites that replaced our manual API pass. It's a job spent reading other people's services closely enough to find what they got wrong.</p>
             <p>I want the other chair. Not because testing is beneath me — because two years of it taught me what careless design actually costs, and I'd rather be the one making those calls than the one filing them. So I've built three backends on my own time, each one aimed at a failure mode I've watched cause real damage: a charge that fires twice, an event that never leaves the service, inventory sold to two people at once.</p>
             <p>I also don't think the automation background is a detour. Most production bugs aren't in the logic somebody wrote — they're in the seams between services, where a retry wasn't planned for or two writes were supposed to be one. Finding those for a living is decent preparation for building things that don't have them.</p>
             <p>What I'm after is an <b>SDE-1 backend role</b> on a team that owns services in production, anywhere in India or fully remote. I'd be joining as someone early in backend work with real depth in a narrow slice of it, and I'd want reviewers who care about correctness enough to tell me when I'm wrong.</p>
@@ -230,7 +234,7 @@
             <div class="row"><dt>Current</dt><dd>Software Engineer,<br>Netradyne</dd></div>
             <div class="row"><dt>Day job</dt><dd>Backend quality<br>&amp; automation</dd></div>
             <div class="row"><dt>Since</dt><dd>Jul 2024</dd></div>
-            <div class="row"><dt>Promoted</dt><dd>In 6 months</dd></div>
+            <div class="row"><dt>Promoted</dt><dd>Jan 2025,<br>in 6 months</dd></div>
             <div class="row"><dt>Based in</dt><dd>Bengaluru, India</dd></div>
             <div class="row"><dt>Open to</dt><dd>Anywhere in India,<br>or remote</dd></div>
             <div class="row"><dt>Looking for</dt><dd>SDE-1, backend<br>development</dd></div>
@@ -286,8 +290,12 @@
           <div class="stack"><span>Docker</span><span>Kubernetes</span><span>AWS</span><span>GitHub Actions</span><span>Maven</span><span>Git</span></div>
         </div>
         <div class="srow">
+          <p class="lbl">Testing</p>
+          <div class="stack"><span>JUnit</span><span>Mockito</span><span>TestNG</span><span>RestAssured</span><span>REST API Automation</span><span>Regression Automation</span></div>
+        </div>
+        <div class="srow">
           <p class="lbl">Fundamentals</p>
-          <div class="stack"><span>Data Structures &amp; Algorithms</span><span>OOP</span><span>System Design</span><span>Design patterns</span></div>
+          <div class="stack"><span>Data Structures &amp; Algorithms</span><span>OOP</span><span>System Design</span><span>Design patterns</span><span>Concurrency Control</span></div>
         </div>
         <div class="srow">
           <p class="lbl">Tools</p>
@@ -296,8 +304,8 @@
         <div class="srow">
           <p class="lbl">Profiles</p>
           <div class="skill-links">
-            <a href="https://leetcode.com/u/AyushKatiyar/" target="_blank" rel="noopener">LeetCode</a>
-            <a href="https://www.geeksforgeeks.org/profile/ayushkatiyar323" target="_blank" rel="noopener">GeeksforGeeks</a>
+            <a href="https://leetcode.com/u/AyushKatiyar/" target="_blank" rel="noopener">LeetCode &mdash; 200+ solved</a>
+            <a href="https://www.geeksforgeeks.org/profile/ayushkatiyar323" target="_blank" rel="noopener">GeeksforGeeks &mdash; 300+ solved</a>
             <a href="https://github.com/ayushkxyz" target="_blank" rel="noopener">GitHub</a>
           </div>
         </div>
@@ -311,7 +319,7 @@
       <p>I'm open to backend roles anywhere in India, and to remote teams. Send a line about what the team owns and I'll reply — including if you want to poke holes in the projects first.</p>
       <div class="row">
         <a class="btn btn-fill" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ayushkatiyar323@gmail.com&amp;su=Hi%20Ayush" target="_blank" rel="noopener" data-email="ayushkatiyar323@gmail.com">Email me</a>
-        <a class="btn btn-ghost" href="Ayush_Katiyar_Resume_.pdf" download>Download resume</a>
+        <a class="btn btn-ghost" href="Ayush_Katiyar_SDE.pdf" download>Download resume</a>
       </div>
     </div>
   </section>
@@ -340,7 +348,7 @@
         </div>
         <div class="crow">
           <span class="lbl">Resume</span>
-          <span class="val"><a href="Ayush_Katiyar_Resume_.pdf" download>Download PDF</a></span>
+          <span class="val"><a href="Ayush_Katiyar_SDE.pdf" download>Download PDF</a></span>
         </div>
       </div>
     </div>
