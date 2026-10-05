@@ -204,7 +204,7 @@ code{font-family:var(--mono);font-size:.9em;background:var(--tint-2);color:var(-
 
 /* ---------------- stat band ---------------- */
 .stats{background:var(--band);border:0;padding:56px 0}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px}
 .stat{color:var(--band-fg)}
 .stat .n{font-size:clamp(32px,3.8vw,46px);font-weight:800;letter-spacing:-.03em;color:var(--band-fg);line-height:1.05}
 .stat .n small{font-size:.55em;font-weight:700;color:var(--blue);margin-left:2px}
@@ -462,7 +462,7 @@ footer .fsocial{display:flex;gap:16px;flex-wrap:wrap}
   .spec div:nth-child(3){border-left:0}
   .spec div:nth-child(n+3){border-top:1px solid var(--line-2)}
   .peek-grid{grid-template-columns:1fr}
-  .stat-grid{grid-template-columns:repeat(2,1fr);gap:28px}
+  .stat-grid{grid-template-columns:repeat(3,1fr);gap:28px}
   section{padding:70px 0}
   .hero-top{padding:60px 0 46px}
 }
